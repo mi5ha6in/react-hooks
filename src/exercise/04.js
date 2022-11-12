@@ -5,7 +5,25 @@ import * as React from 'react'
 
 function Board() {
   // 🐨 squares is the state for this component. Add useState for squares
-  const [squares, setSquare] = React.useState(Array(9).fill(null))
+  const useLocalStorageState = (initialState, keyLocalStorageState) => {
+    const computeInitialState = (initialState, keyLocalStorageState) => {
+      const localStorageStateROW = window.localStorage.getItem(keyLocalStorageState);
+      const localStorageState = localStorageStateROW ? JSON.parse(localStorageStateROW) : null;
+      const state = localStorageState ? localStorageState : initialState;
+      return typeof state === 'function' ? state() : state
+    } 
+
+    const [state, setState] = React.useState(computeInitialState(initialState, keyLocalStorageState));
+
+    React.useEffect(() => {
+      const stringifyState = JSON.stringify(state)
+      window.localStorage.setItem(keyLocalStorageState, stringifyState)
+    }, [state, keyLocalStorageState])
+
+    return [state, setState]
+  }
+
+  const [squares, setSquare] = useLocalStorageState(Array(9).fill(null), 'squares')
 
   // 🐨 We'll need the following bits of derived state:
   // - nextValue ('X' or 'O')
