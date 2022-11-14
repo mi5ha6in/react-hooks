@@ -38,10 +38,13 @@ function Board({onClick, squares}) {
 
 function Game() {
 
-  const [squares, setSquares] = useLocalStorageState(
-    'squares',
-    Array(9).fill(null),
+  const [history, setHistory] = useLocalStorageState(
+    'history',
+    [Array(9).fill(null)]
   )
+
+  const [step, setStep] = useLocalStorageState('step', 0)
+  const [squares, setSquares] = React.useState(history[step])
 
   const nextValue = calculateNextValue(squares)
   const winner = calculateWinner(squares)
@@ -53,17 +56,26 @@ function Game() {
     }
 
     const squaresCopy = [...squares]
-    squaresCopy[square] = nextValue
+    squaresCopy[square] = nextValue;
     setSquares(squaresCopy)
+    setStep(() => step + 1)
+    const historyCopy = history.slice(0, step + 1);
+    historyCopy.push(squaresCopy)
+    setHistory(historyCopy)
   }
-
 
   function restart() {
+    setHistory([Array(9).fill(null)])
     setSquares(Array(9).fill(null))
+    setStep(0)
   }
 
-  function HistoryButton(index) {
-    return <button index={index}>step {index}</button>
+  function HistoryButton({index, ...props}) {
+    const calculateHistory = () => {
+      setSquares(history[index])
+      setStep(index)
+    }
+    return <button {...props} onClick={calculateHistory}>{index}</button>
   }
 
   return (
@@ -76,7 +88,13 @@ function Game() {
       </div>
       <div className="game-info">
       <div>{status}</div>
-
+      {history.map((i, index) => {
+        if (step === index) {
+          return <HistoryButton style={{backgroundColor: 'red'}} key={index} index={index}/>
+        } else {
+          return <HistoryButton key={index} index={index}/>
+        }
+      })}
     </div>
     </div>
   )
