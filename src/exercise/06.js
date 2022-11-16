@@ -14,22 +14,23 @@ import {
 } from '../pokemon'
 
 function PokemonInfo({pokemonName}) {
-  const [pokemon, setPokemon] = React.useState(null)
-  const [error, setError] = React.useState(null)
-  const [status, setStatus] = React.useState('idle')
+  const initialState = {
+    pokemon: null,
+    error: null,
+    status: 'idle',
+  }
+
+  const [state, setState] = React.useState(initialState)
 
   React.useEffect(() => {
     const getPokemon = async () => {
       if (pokemonName) {
-        setPokemon(null)
-        setStatus('pending')
+        setState(state => ({...state, ...{pokemon: null, status: 'pending'}}))
         try {
           const pokemonInfo = await fetchPokemon(pokemonName)
-          setPokemon(pokemonInfo)
-          setStatus('resolved')
+          setState(state => ({...state, ...{pokemon: pokemonInfo, status: 'resolved'}}))
         } catch (error) {
-          setError(error)
-          setStatus('rejected')
+          setState(state => ({...state, ...{error, status: 'rejected'}}))
         }
       }
     }
@@ -39,18 +40,18 @@ function PokemonInfo({pokemonName}) {
   const errorElement = (
     <div role="alert">
       There was an error:{' '}
-      <pre style={{whiteSpace: 'normal'}}>{error?.message}</pre>
+      <pre style={{whiteSpace: 'normal'}}>{state.error?.message}</pre>
     </div>
   )
 
   const getInfoMessage = () => {
-    switch (status) {
+    switch (state.status) {
       case 'idle':
         return 'Submit a pokemon'
       case 'pending':
         return <PokemonInfoFallback name={pokemonName} />
       case 'resolved':
-        return <PokemonDataView pokemon={pokemon} />
+        return <PokemonDataView pokemon={state.pokemon} />
       case 'rejected':
         return errorElement
       default:
