@@ -14,19 +14,30 @@ import {
 } from '../pokemon'
 
 function PokemonInfo({pokemonName}) {
-
   const [pokemon, setPokemon] = React.useState(null)
+  const [error, setError] = React.useState(null)
 
   React.useEffect(() => {
     const getPokemon = async () => {
       if (pokemonName) {
         setPokemon(null)
-        const pokemonInfo = await fetchPokemon(pokemonName)
-        setPokemon(pokemonInfo)
+        try {
+          const pokemonInfo = await fetchPokemon(pokemonName)
+          setPokemon(pokemonInfo)
+        } catch (error) {
+          setError(error)
+        }
       }
     }
     getPokemon()
   }, [pokemonName])
+
+  const errorElement = (
+    <div role="alert">
+      There was an error:{' '}
+      <pre style={{whiteSpace: 'normal'}}>{error?.message}</pre>
+    </div>
+  ) 
 
   const info = pokemon ? (
     <PokemonDataView pokemon={pokemon} />
@@ -36,7 +47,11 @@ function PokemonInfo({pokemonName}) {
     'Submit a pokemon'
   )
   // 💣 remove this
-  return <>{info}</>
+  return (
+    <>
+      {error ? errorElement : info}
+    </>
+  )
 }
 
 function App() {
