@@ -1,8 +1,11 @@
+import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { generateGradient, getMatchingPosts } from '#shared/blog-posts'
 
 function App() {
 	// 🐨 call useState here and initialize the query with an empty string
+
+	const [query, setQuery] = useState('')
 
 	return (
 		<div className="app">
@@ -14,6 +17,7 @@ function App() {
 						name="query"
 						type="search"
 						// 🐨 add an onChange handler here that calls setQuery with the event.currentTarget.value
+						onChange={(event) => setQuery(event.currentTarget.value)}
 					/>
 				</div>
 				<div>
@@ -30,7 +34,7 @@ function App() {
 				<button type="submit">Submit</button>
 			</form>
 			{/* 🐨 pass the query state as a prop */}
-			<MatchingPosts query="" />
+			<MatchingPosts query={query} />
 		</div>
 	)
 }
