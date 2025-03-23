@@ -7,6 +7,13 @@ function App() {
 
 	// 🐨 make a function called handleCheck that accepts a "tag" string and a "checked" boolean
 	// 🐨 By calling setQuery, add the tag to the query if checked and remove it if not
+	const handleCheck = (tag: string, checked: boolean) => {
+		const words = query.split(' ')
+		const newWords = checked
+			? [...words, tag]
+			: words.filter((word) => word !== tag)
+		setQuery(newWords.filter(Boolean).join(' ').trim())
+	}
 
 	return (
 		<div className="app">
@@ -18,7 +25,8 @@ function App() {
 						name="query"
 						type="search"
 						// 🐨 set the value prop to query
-						onChange={e => setQuery(e.currentTarget.value)}
+						value={query}
+						onChange={(e) => setQuery(e.currentTarget.value)}
 					/>
 				</div>
 				<div>
@@ -26,6 +34,9 @@ function App() {
 						<input
 							type="checkbox"
 							// 🐨 add an onChange to call handleCheck with dog and event.currentTarget.checked
+							onChange={(event) =>
+								handleCheck('dog', event.currentTarget.checked)
+							}
 						/>{' '}
 						🐶 dog
 					</label>
@@ -33,6 +44,9 @@ function App() {
 						<input
 							type="checkbox"
 							// 🐨 add an onChange to call handleCheck with cat and event.currentTarget.checked
+							onChange={(event) =>
+								handleCheck('cat', event.currentTarget.checked)
+							}
 						/>{' '}
 						🐱 cat
 					</label>
@@ -40,6 +54,9 @@ function App() {
 						<input
 							type="checkbox"
 							// 🐨 add an onChange to call handleCheck with caterpillar and event.currentTarget.checked
+							onChange={(event) =>
+								handleCheck('caterpillar', event.currentTarget.checked)
+							}
 						/>{' '}
 						🐛 caterpillar
 					</label>
@@ -56,7 +73,7 @@ function MatchingPosts({ query }: { query: string }) {
 
 	return (
 		<ul className="post-list">
-			{matchingPosts.map(post => (
+			{matchingPosts.map((post) => (
 				<li key={post.id}>
 					<div
 						className="post-image"
@@ -64,7 +81,7 @@ function MatchingPosts({ query }: { query: string }) {
 					/>
 					<a
 						href={post.id}
-						onClick={event => {
+						onClick={(event) => {
 							event.preventDefault()
 							alert(`Great! Let's go to ${post.id}!`)
 						}}
