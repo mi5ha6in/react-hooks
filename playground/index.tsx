@@ -2,13 +2,17 @@ import { useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import { generateGradient, getMatchingPosts } from '#shared/blog-posts'
 
-function App() {
-	// 🐨 create a "params" variable that's the URLSearchParams from the search string
-	// 💰 new URLSearchParams(window.location.search)
-	// 🐨 initialize the state to the "query" param (fallback to an empty string if it doesn't exist)
+// 🐨 make a function here called getQueryParam
+const getQueryParam = () => {
+	// 🐨 move 👇 up to getQueryParam
 	const params = new URLSearchParams(window.location.search)
-	const [query, setQuery] = useState(params.get('query') ?? '')
-	// 📜 https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams
+	const initialQuery = params.get('query') ?? ''
+	return initialQuery
+	// 🐨 move 👆 up to getQueryParam and return the initialQuery
+}
+function App() {
+	// 🐨 pass getQueryParam into useState
+	const [query, setQuery] = useState(getQueryParam)
 	const words = query.split(' ')
 
 	const dogChecked = words.includes('dog')
