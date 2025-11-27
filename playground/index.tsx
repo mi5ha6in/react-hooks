@@ -1,23 +1,33 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { generateGradient, getMatchingPosts } from '#shared/blog-posts'
+import { setGlobalSearchParams } from '#shared/utils'
 
-// 🐨 make a function here called getQueryParam
-const getQueryParam = () => {
-	// 🐨 move 👇 up to getQueryParam
+function getQueryParam() {
 	const params = new URLSearchParams(window.location.search)
-	const initialQuery = params.get('query') ?? ''
-	return initialQuery
-	// 🐨 move 👆 up to getQueryParam and return the initialQuery
+	return params.get('query') ?? ''
 }
+
 function App() {
-	// 🐨 pass getQueryParam into useState
 	const [query, setQuery] = useState(getQueryParam)
+
 	const words = query.split(' ')
 
 	const dogChecked = words.includes('dog')
 	const catChecked = words.includes('cat')
 	const caterpillarChecked = words.includes('caterpillar')
+
+	// 🐨 add a useEffect(() => {}, []) call here (we'll talk about that empty array later)
+	// 🐨 in the useEffect callback, subscribe to window's popstate event
+	// 🦉 if that doesn't make sense to you... don't worry, it's supposed to be broken! We'll fix it next
+	// 🐨 your event handler should call setQuery to getQueryParam()
+	// 📜 https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener
+
+	useEffect(() => {
+		window.addEventListener('popstate', () => {
+			setQuery(getQueryParam())
+		})
+	}, [])
 
 	function handleCheck(tag: string, checked: boolean) {
 		const newWords = checked ? [...words, tag] : words.filter((w) => w !== tag)
@@ -26,7 +36,11 @@ function App() {
 
 	return (
 		<div className="app">
-			<form>
+			<form
+				action={() => {
+					setGlobalSearchParams({ query })
+				}}
+			>
 				<div>
 					<label htmlFor="searchInput">Search:</label>
 					<input
