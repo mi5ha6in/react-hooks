@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
-import { generateGradient, getMatchingPosts } from '#shared/blog-posts'
+import {
+	type BlogPost,
+	generateGradient,
+	getMatchingPosts,
+} from '#shared/blog-posts'
 import { setGlobalSearchParams } from '#shared/utils'
 
 function getQueryParam() {
@@ -9,35 +13,44 @@ function getQueryParam() {
 }
 
 function App() {
+	// 🐨 add the useState for the query here (lift it up from the Form)
 	const [query, setQuery] = useState(getQueryParam)
 
-	const words = query.split(' ')
+	useEffect(() => {
+		const updateQuery = () => setQuery(getQueryParam())
+		window.addEventListener('popstate', updateQuery)
+		return () => {
+			window.removeEventListener('popstate', updateQuery)
+		}
+	}, [])
+
+	return (
+		<div className="app">
+			{/* 🐨 pass the query and setQuery to the form */}
+			<Form query={query} setQuery={setQuery} />
+			{/* 🐨 pass the query to this prop */}
+			<MatchingPosts query={query} />
+		</div>
+	)
+}
+
+// 🐨 update the Form props to accept query and setQuery
+function Form({
+	query,
+	setQuery,
+}: {
+	query: string
+	setQuery: (query: string) => void
+}) {
+	// 🐨 lift this up to the App
+
+	const words = query.split(' ').map((w) => w.trim())
 
 	const dogChecked = words.includes('dog')
 	const catChecked = words.includes('cat')
 	const caterpillarChecked = words.includes('caterpillar')
 
-	useEffect(() => {
-		// 🚨 we use this to test whether your cleanup is working
-		const hugeData = new Array(1_000_000).fill(
-			new Array(1_000_000).fill('🐶🐱🐛'),
-		)
-
-		// 🐨 extract your event handler here into a function called updateQuery
-		const updateQuery = () => {
-			// 🚨 this console.log forces the hugeData to hang around as long as the event listener is active
-			console.log(hugeData)
-
-			console.log('popstate event listener called')
-			setQuery(getQueryParam())
-		}
-		window.addEventListener('popstate', updateQuery)
-		return () => {
-			window.removeEventListener('popstate', updateQuery)
-		}
-		// 🐨 return a function which removes the popstate event listener
-		// 📜 https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener
-	}, [])
+	// 🐨 move this up to the App as well
 
 	function handleCheck(tag: string, checked: boolean) {
 		const newWords = checked ? [...words, tag] : words.filter((w) => w !== tag)
@@ -45,54 +58,51 @@ function App() {
 	}
 
 	return (
-		<div className="app">
-			<form
-				action={() => {
-					setGlobalSearchParams({ query })
-				}}
-			>
-				<div>
-					<label htmlFor="searchInput">Search:</label>
+		<form
+			action={() => {
+				setGlobalSearchParams({ query })
+			}}
+		>
+			<div>
+				<label htmlFor="searchInput">Search:</label>
+				<input
+					id="searchInput"
+					name="query"
+					type="search"
+					value={query}
+					onChange={(e) => setQuery(e.currentTarget.value)}
+				/>
+			</div>
+			<div>
+				<label>
 					<input
-						id="searchInput"
-						name="query"
-						type="search"
-						value={query}
-						onChange={(e) => setQuery(e.currentTarget.value)}
-					/>
-				</div>
-				<div>
-					<label>
-						<input
-							type="checkbox"
-							checked={dogChecked}
-							onChange={(e) => handleCheck('dog', e.currentTarget.checked)}
-						/>{' '}
-						🐶 dog
-					</label>
-					<label>
-						<input
-							type="checkbox"
-							checked={catChecked}
-							onChange={(e) => handleCheck('cat', e.currentTarget.checked)}
-						/>{' '}
-						🐱 cat
-					</label>
-					<label>
-						<input
-							type="checkbox"
-							checked={caterpillarChecked}
-							onChange={(e) =>
-								handleCheck('caterpillar', e.currentTarget.checked)
-							}
-						/>{' '}
-						🐛 caterpillar
-					</label>
-				</div>
-				<button type="submit">Submit</button>
-			</form>
-			<MatchingPosts query={query} />
-		</div>
+						type="checkbox"
+						checked={dogChecked}
+						onChange={(e) => handleCheck('dog', e.currentTarget.checked)}
+					/>{' '}
+					🐶 dog
+				</label>
+				<label>
+					<input
+						type="checkbox"
+						checked={catChecked}
+						onChange={(e) => handleCheck('cat', e.currentTarget.checked)}
+					/>{' '}
+					🐱 cat
+				</label>
+				<label>
+					<input
+						type="checkbox"
+						checked={caterpillarChecked}
+						onChange={(e) =>
+							handleCheck('caterpillar', e.currentTarget.checked)
+						}
+					/>{' '}
+					🐛 caterpillar
+				</label>
+			</div>
+			<button type="submit">Submit</button>
+		</form>
 	)
 }
 
@@ -101,46 +111,49 @@ function MatchingPosts({ query }: { query: string }) {
 
 	return (
 		<ul className="post-list">
-			{matchingPosts.map((post) => (
-				<li key={post.id}>
-					<div
-						className="post-image"
-						style={{ background: generateGradient(post.id) }}
-					/>
-					<a
-						href={post.id}
-						onClick={(event) => {
-							event.preventDefault()
-							alert(`Great! Let's go to ${post.id}!`)
-						}}
-					>
-						<h2>{post.title}</h2>
-						<p>{post.description}</p>
-					</a>
-				</li>
-			))}
+			{matchingPosts
+				.sort((a, b) => a.title.localeCompare(b.title))
+				.map((post) => (
+					<Card key={post.id} post={post} />
+				))}
 		</ul>
 	)
 }
 
-function DemoApp() {
-	const [showForm, setShowForm] = useState(true)
-
+function Card({ post }: { post: BlogPost }) {
+	const [isFavorited, setIsFavorited] = useState(false)
 	return (
-		<div>
-			<label>
-				<input
-					type="checkbox"
-					checked={showForm}
-					onChange={(e) => setShowForm(e.currentTarget.checked)}
-				/>{' '}
-				show form
-			</label>
-			{showForm ? <App /> : null}
-		</div>
+		<li>
+			{isFavorited ? (
+				<button
+					aria-label="Remove favorite"
+					onClick={() => setIsFavorited(false)}
+				>
+					❤️
+				</button>
+			) : (
+				<button aria-label="Add favorite" onClick={() => setIsFavorited(true)}>
+					🤍
+				</button>
+			)}
+			<div
+				className="post-image"
+				style={{ background: generateGradient(post.id) }}
+			/>
+			<a
+				href={post.id}
+				onClick={(event) => {
+					event.preventDefault()
+					alert(`Great! Let's go to ${post.id}!`)
+				}}
+			>
+				<h2>{post.title}</h2>
+				<p>{post.description}</p>
+			</a>
+		</li>
 	)
 }
 
 const rootEl = document.createElement('div')
 document.body.append(rootEl)
-createRoot(rootEl).render(<DemoApp />)
+createRoot(rootEl).render(<App />)
