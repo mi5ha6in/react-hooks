@@ -1,6 +1,26 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useId } from 'react'
 import { createRoot } from 'react-dom/client'
 import VanillaTilt from 'vanilla-tilt'
+
+function Field({
+	label,
+	...inputProps
+}: {
+	label: string
+} & React.ComponentProps<'input'>) {
+	// 🐨 create a generatedId using useId
+	// 🐨 create an id that defaults to inputProps.id and falls back to the generatedId
+	const generatedId = useId()
+	const id = inputProps.id ?? generatedId
+	return (
+		<div>
+			{/* 🐨 add htmlFor on the label and set it to the id */}
+			<label htmlFor={id}>{label}</label>
+			{/* 🐨 add an id prop here */}
+			<input {...inputProps} id={id} />
+		</div>
+	)
+}
 
 interface HTMLVanillaTiltElement extends HTMLDivElement {
 	vanillaTilt?: VanillaTilt
@@ -21,21 +41,18 @@ function Tilt({
 }) {
 	const tiltRef = useRef<HTMLVanillaTiltElement>(null)
 
-	// 🐨 move this into the useEffect directly
-
 	useEffect(() => {
+		const { current: tiltNode } = tiltRef
+		if (!tiltNode) return
 		const vanillaTiltOptions = {
 			max,
 			speed,
 			glare,
 			'max-glare': maxGlare,
 		}
-		const { current: tiltNode } = tiltRef
-		if (!tiltNode) return
 		VanillaTilt.init(tiltNode, vanillaTiltOptions)
 		return () => tiltNode.vanillaTilt?.destroy()
-		// 🐨 instead of passing the options object here, pass each primitive option
-	}, [max, speed, glare, maxGlare])
+	}, [glare, max, maxGlare, speed])
 
 	return (
 		<div ref={tiltRef} className="tilt-root">
@@ -45,7 +62,6 @@ function Tilt({
 }
 
 function App() {
-	const [showTilt, setShowTilt] = useState(true)
 	const [count, setCount] = useState(0)
 	const [options, setOptions] = useState({
 		max: 25,
@@ -54,59 +70,45 @@ function App() {
 		maxGlare: 0.5,
 	})
 	return (
-		<div>
-			<button onClick={() => setShowTilt((s) => !s)}>Toggle Visibility</button>
-			{showTilt ? (
-				<div className="app">
-					<form
-						onSubmit={(e) => e.preventDefault()}
-						onChange={(event) => {
-							const formData = new FormData(event.currentTarget)
-							setOptions({
-								max: Number(formData.get('max')),
-								speed: Number(formData.get('speed')),
-								glare: formData.get('glare') === 'on',
-								maxGlare: Number(formData.get('maxGlare')),
-							})
-						}}
-					>
-						<div>
-							<label htmlFor="max">Max:</label>
-							<input id="max" name="max" type="number" defaultValue={25} />
-						</div>
-						<div>
-							<label htmlFor="speed">Speed:</label>
-							<input id="speed" name="speed" type="number" defaultValue={400} />
-						</div>
-						<div>
-							<label>
-								<input id="glare" name="glare" type="checkbox" defaultChecked />
-								Glare
-							</label>
-						</div>
-						<div>
-							<label htmlFor="maxGlare">Max Glare:</label>
-							<input
-								id="maxGlare"
-								name="maxGlare"
-								type="number"
-								defaultValue={0.5}
-							/>
-						</div>
-					</form>
-					<br />
-					<Tilt {...options}>
-						<div className="totally-centered">
-							<button
-								className="count-button"
-								onClick={() => setCount((c) => c + 1)}
-							>
-								{count}
-							</button>
-						</div>
-					</Tilt>
+		<div className="app">
+			<form
+				onSubmit={(e) => e.preventDefault()}
+				onChange={(event) => {
+					const formData = new FormData(event.currentTarget)
+					setOptions({
+						max: Number(formData.get('max')),
+						speed: Number(formData.get('speed')),
+						glare: formData.get('glare') === 'on',
+						maxGlare: Number(formData.get('maxGlare')),
+					})
+				}}
+			>
+				<Field label="Max" name="max" type="number" defaultValue={25} />
+				<Field label="Speed" name="speed" type="number" defaultValue={400} />
+				<div>
+					<label>
+						<input name="glare" type="checkbox" defaultChecked />
+						Glare
+					</label>
 				</div>
-			) : null}
+				<Field
+					label="Max Glare"
+					name="maxGlare"
+					type="number"
+					defaultValue={0.5}
+				/>
+			</form>
+			<br />
+			<Tilt {...options}>
+				<div className="totally-centered">
+					<button
+						className="count-button"
+						onClick={() => setCount((c) => c + 1)}
+					>
+						{count}
+					</button>
+				</div>
+			</Tilt>
 		</div>
 	)
 }
@@ -114,10 +116,3 @@ function App() {
 const rootEl = document.createElement('div')
 document.body.append(rootEl)
 createRoot(rootEl).render(<App />)
-
-// 🤫 we'll fix this in this step!
-// (ALMOST) NEVER DISABLE THIS LINT RULE IN REAL LIFE!
-/*
-eslint
-	react-hooks/exhaustive-deps: "off",
-*/
