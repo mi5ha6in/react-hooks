@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { createRoot } from 'react-dom/client'
 import {
 	calculateNextValue,
@@ -9,8 +9,25 @@ import {
 
 const defaultState = Array(9).fill(null)
 
+const localStorageKey = 'squares'
 function Board() {
-	const [squares, setSquares] = useState<Squares>(defaultState)
+	const [squares, setSquares] = useState<Squares>(() => {
+		let localStorageValue
+		try {
+			localStorageValue = JSON.parse(
+				window.localStorage.getItem(localStorageKey) ?? 'null',
+			)
+		} catch {
+			// something is wrong in localStorage, so don't use it
+		}
+		return localStorageValue && Array.isArray(localStorageValue)
+			? localStorageValue
+			: defaultState
+	})
+
+	useEffect(() => {
+		window.localStorage.setItem(localStorageKey, JSON.stringify(squares))
+	}, [squares])
 
 	const nextValue = calculateNextValue(squares)
 	const winner = calculateWinner(squares)
